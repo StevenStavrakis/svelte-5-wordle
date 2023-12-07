@@ -16,7 +16,7 @@
   })();
 </script>
 
-<div class="w-12 h-12"> 
+<div class="w-16 h-16"> 
   {#if letter === null}
     <div
       class="aspect-square rounded-md w-full h-full flex items-center justify-center bg-gray-600/50"

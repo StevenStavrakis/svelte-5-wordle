@@ -1,8 +1,9 @@
 <script lang="ts">
   import Letter from "./Letter.svelte";
   import Keyboard from "./Keyboard.svelte";
+  import { tweened } from "svelte/motion";
   import { onMount } from "svelte";
-  import { get } from "svelte/store";
+  import Message from "./Message.svelte";
 
   type WordleStore = {
     targetWord: string;
@@ -17,6 +18,10 @@
     status: "CORRECT" | "INCLUDED" | "WRONG";
   };
 
+  let opacity = tweened(0, {
+    delay: 300,
+  });
+
   const getWords = async (): Promise<string[]> => {
     const response = await fetch("/words.json");
 
@@ -30,7 +35,8 @@
 
   const setup = async () => {
     await loadWordsIntoState();
-    wordleStore.targetWord = getRandomWord(words);
+    wordleStore.targetWord = "stare";
+    opacity.set(1);
   };
 
   let words = $state<string[]>([]);
@@ -50,12 +56,16 @@
   let inputText = $state("");
 
   const addCharacter = (character: string) => {
+    if (inputText.length >= 5) {
+      return;
+    }
     inputText += character;
   };
 
   const deleteCharacter = () => {
     inputText = inputText.slice(0, -1);
   };
+
   let error = $state("");
 
   $effect(() => {
@@ -102,7 +112,8 @@
       error = "Word must be the same length as the target word";
       return;
     }
-    wordleStore.guessesLeft -= 1;
+
+    inputText = ""
 
     const targetCount = countLetters(wordleStore.targetWord);
 
@@ -135,15 +146,16 @@
       } as LetterGuess;
     });
 
-    if (word === wordleStore.targetWord) {
-      wordleStore.status = "won";
-      return;
-    }
+    wordleStore.guessesLeft -= 1;
     wordleStore.guesses = [...wordleStore.guesses, toDisplay];
     wordleStore.guessedLetters = new Set([
       ...wordleStore.guessedLetters,
       ...toDisplay,
     ]);
+    if (word === wordleStore.targetWord) {
+      wordleStore.status = "won";
+      return;
+    }
 
     if (wordleStore.guessesLeft === 0) {
       wordleStore.status = "lost";
@@ -159,13 +171,13 @@
     }
     if (event.key === "Backspace") {
       deleteCharacter();
+      return;
     } else if (event.key === "Enter") {
       submitWord(inputText);
+      return;
     } else if (event.key.length === 1 && event.key.match(/[a-z]/i)) {
-      if (inputText.length >= 5) {
-        return;
-      }
       addCharacter(event.key);
+      return;
     }
   };
 
@@ -177,13 +189,24 @@
   });
 </script>
 
-{#await setup() then}
+{#await setup()}
   <div class="w-screen h-screen grid place-items-center">
+    <div class="text-white">loading...</div>
+  </div>
+{:then}
+  <div
+    class="w-screen h-screen grid place-items-center"
+    style={`opacity: ${$opacity}`}
+  >
     {#if wordleStore.status === "won"}
       <div
-        class="absolute w-full h-full flex items-center justify-center bg-green-600/50"
+        class="absolute w-full h-full flex items-center justify-center bg-green-600/80"
       >
-        You win!
+        <div>
+          <h2 class="text-4xl text-white font-bold">You win!</h2>
+          <span>the word was:</span>
+          <span class="text-2xl">{wordleStore.targetWord}</span>
+        </div>
       </div>
     {/if}
     {#if wordleStore.status === "lost"}
@@ -204,7 +227,7 @@
     <div>
       <div class="text-white mb-12">
         <div class="text-center mb-12">
-          <h1 class="text-4xl font-bold">Wordle</h1>
+          <h1 class="text-6xl font-bold">Wordle</h1>
           <p>Guess the word!</p>
         </div>
         <div class="flex flex-col gap-4">
@@ -232,13 +255,16 @@
         </div>
       </div>
       <Keyboard
+        on:submitWord={() => {
+          submitWord(inputText);
+        }}
         guessedLetters={wordleStore.guessedLetters}
         {addCharacter}
         {deleteCharacter}
       />
-      {#if error}
-        <div class="text-red-500">{error}</div>
-      {/if}
     </div>
+    {#if error}
+      <Message text={error} />
+    {/if}
   </div>
 {/await}
