@@ -17,5 +17,8 @@
     "svelte": "^5.0.0-next.1",
     "tailwindcss": "^3.0.24",
     "typescript": "^5.3.2"
+  },
+  "devDependencies": {
+    "cheerio": "1.0.0-rc.12"
   }
 }
