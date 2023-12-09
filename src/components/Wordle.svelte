@@ -113,7 +113,7 @@
       return;
     }
 
-    inputText = ""
+    inputText = "";
 
     const targetCount = countLetters(wordleStore.targetWord);
 
@@ -233,21 +233,30 @@
         <div class="flex flex-col gap-4">
           {#each wordleStore.guesses as guess}
             <div class="flex gap-2 justify-center">
-              {#each guess as letter}
-                <Letter letter={letter.letter} status={letter.status} />
+              {#each guess as letter, i}
+                <Letter
+                  index={i}
+                  current={false}
+                  letter={letter.letter}
+                  status={letter.status}
+                />
               {/each}
             </div>
           {/each}
           {#if wordleStore.guessesLeft > 0}
             <div id="current_row" class="flex gap-2 justify-center">
-              {#each [0, 1, 2, 3, 4] as letterIndex}
-                <Letter letter={inputText[letterIndex] ?? null} status={null} />
+              {#each [0, 1, 2, 3, 4].map((ind) => inputText[ind]) as letter}
+                <Letter
+                  current={true}
+                  letter={letter ?? null}
+                  status={null}
+                />
               {/each}
             </div>
             {#each [...Array(wordleStore.guessesLeft - 1)] as empty}
               <div class="flex gap-2 justify-center">
                 {#each [...Array(5)] as emptyLetter}
-                  <Letter letter={null} status={null} />
+                  <Letter current={false} letter={null} status={null} />
                 {/each}
               </div>
             {/each}
