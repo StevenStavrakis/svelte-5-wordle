@@ -1,183 +1,35 @@
 <script lang="ts">
-  import Letter from "./Letter.svelte";
   import Keyboard from "./Keyboard.svelte";
-  import { tweened } from "svelte/motion";
   import { onMount } from "svelte";
   import Message from "./Message.svelte";
-  import InputRow from "./InputRow.svelte";
   import Overlay from "./Overlay.svelte";
+  import {
+    gameState,
+    addCharacter,
+    deleteCharacter,
+    processGuess,
+    GameStateStatus,
+    initializeGame,
+  } from "./state.svelte.ts";
+  import Board from "./Board.svelte";
 
-  type WordleStore = {
-    targetWord: string;
-    guessedLetters: Set<LetterGuess>;
-    guessesLeft: number;
-    guesses: LetterGuess[][];
-    status: "playing" | "won" | "lost";
-  };
-
-  type LetterGuess = {
-    letter: string;
-    status: "CORRECT" | "INCLUDED" | "WRONG";
-  };
-
-  let words = $state<string[]>([]);
-  let inputText = $state("");
-  let error = $state("");
-  let wordleStore = $state<WordleStore>({
-    targetWord: "",
-    guessedLetters: new Set(),
-    guessesLeft: 5,
-    guesses: [],
-    status: "playing",
-  });
-
-  let animating = $state<boolean>(false);
-  let opacity = tweened(0, {
-    delay: 300,
-  });
-
-  const getWords = async (): Promise<string[]> => {
-    const response = await fetch("/words.json");
-
-    const data = await response.json();
-    return data.default;
-  };
-
-  const loadWordsIntoState = async () => {
-    words = await getWords();
-  };
-
-  const setup = async () => {
-    await loadWordsIntoState();
-    wordleStore.targetWord = "stare";
-    opacity.set(1);
-  };
-
-  const getRandomWord = (words: string[]): string => {
-    return words[Math.floor(Math.random() * words.length)];
-  };
-
-  const addCharacter = (character: string) => {
-    if (inputText.length >= 5) {
-      return;
-    }
-    inputText += character;
-  };
-
-  const deleteCharacter = () => {
-    inputText = inputText.slice(0, -1);
-  };
-
-  $effect(() => {
-    inputText;
-    error = "";
-  });
-
-  const countLetters = (word: string) => {
-    const letters: Record<string, number> = {};
-
-    for (const letter of word) {
-      letters[letter] = (letters[letter] || 0) + 1;
-    }
-
-    return letters;
-  };
-
-  const reset = () => {
-    inputText = "";
-    wordleStore = {
-      targetWord: getRandomWord(words),
-      guesses: [],
-      guessesLeft: 5,
-      status: "playing",
-      guessedLetters: new Set(),
-    };
-  };
-
-  const submitWord = async (word: string) => {
-    if (wordleStore.status !== "playing") {
-      return;
-    }
-    if (word.length !== 5) {
-      error = "Word must be 5 letters long";
-      return;
-    }
-    if (words.indexOf(word) === -1) {
-      error = "Word not found in dictionary";
-      return;
-    }
-    const letters = word.split("");
-    const targetLetters = wordleStore.targetWord.split("");
-    if (letters.length !== targetLetters.length) {
-      error = "Word must be the same length as the target word";
-      return;
-    }
-
-    inputText = "";
-
-    const targetCount = countLetters(wordleStore.targetWord);
-
-    const correctLetters = letters.map((letter, index) => {
-      let status = null;
-      if (letter === targetLetters[index]) {
-        targetCount[letter] -= 1;
-        status = "CORRECT";
+  const isLoading = $derived(
+    (() => {
+      if (gameState.gameStatus === GameStateStatus.LOADING) {
+        return true;
       }
-      return {
-        letter,
-        status,
-      };
-    });
-
-    const toDisplay = correctLetters.map((letter) => {
-      if (letter.status === "CORRECT") {
-        return letter as LetterGuess;
-      }
-      if (targetCount[letter.letter] > 0) {
-        targetCount[letter.letter] -= 1;
-        return {
-          letter: letter.letter,
-          status: "INCLUDED",
-        } as LetterGuess;
-      }
-      return {
-        letter: letter.letter,
-        status: "WRONG",
-      } as LetterGuess;
-    });
-
-    wordleStore.guessesLeft -= 1;
-    wordleStore.guesses = [...wordleStore.guesses, toDisplay];
-    wordleStore.guessedLetters = new Set([
-      ...wordleStore.guessedLetters,
-      ...toDisplay,
-    ]);
-
-    animating = true;
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    animating = false;
-    if (word === wordleStore.targetWord) {
-      wordleStore.status = "won";
-      return;
-    }
-
-    if (wordleStore.guessesLeft === 0) {
-      wordleStore.status = "lost";
-      return;
-    }
-
-    inputText = "";
-  };
-
+      return false;
+    })()
+  );
   const handleKeyPress = (event: KeyboardEvent) => {
-    if (wordleStore.status !== "playing" || animating) {
+    if (gameState.gameStatus !== GameStateStatus.PLAYING) {
       return;
     }
     if (event.key === "Backspace") {
       deleteCharacter();
       return;
     } else if (event.key === "Enter") {
-      submitWord(inputText);
+      processGuess(gameState.inputText);
       return;
     } else if (event.key.length === 1 && event.key.match(/[a-z]/i)) {
       addCharacter(event.key);
@@ -186,69 +38,35 @@
   };
 
   onMount(() => {
+    initializeGame();
     window.addEventListener("keydown", handleKeyPress);
     return () => {
       window.removeEventListener("keydown", handleKeyPress);
     };
   });
+
+  $inspect(isLoading);
 </script>
 
-{#await setup()}
-  <div class="w-screen h-screen grid place-items-center">
-    <div class="text-white">loading...</div>
-  </div>
-{:then}
-  <div
-    class="w-screen h-screen grid place-items-center"
-    style={`opacity: ${$opacity}`}
-  >
-    <Overlay
-      targetWord={wordleStore.targetWord}
-      gameStatus={wordleStore.status}
-      {reset}
-    />
-    <div>
-      <div class="text-white mb-12">
-        <div class="text-center mb-12">
-          <h1 class="text-6xl font-bold">Wordle</h1>
-          <p>Guess the word!</p>
-        </div>
-        <div class="flex flex-col gap-4">
-          {#each wordleStore.guesses as guess}
-            <div class="flex gap-2 justify-center">
-              {#each guess as letter, i}
-                <Letter
-                  index={i}
-                  current={false}
-                  letter={letter.letter}
-                  status={letter.status}
-                />
-              {/each}
-            </div>
-          {/each}
-          {#if wordleStore.guessesLeft > 0}
-            <InputRow {inputText} />
-            {#each [...Array(wordleStore.guessesLeft - 1)] as empty}
-              <div class="flex gap-2 justify-center">
-                {#each [...Array(5)] as emptyLetter}
-                  <Letter current={false} letter={null} status={null} />
-                {/each}
-              </div>
-            {/each}
-          {/if}
-        </div>
-      </div>
+{#key isLoading}
+  {#if isLoading}
+    <div class="w-screen h-screen grid place-items-center">
+      <div class="text-white">loading...</div>
+    </div>
+  {:else}
+    <div class="w-screen h-screen grid place-items-center">
+      <Overlay />
+      <Board />
       <Keyboard
         on:submitWord={() => {
-          submitWord(inputText);
+          processGuess(gameState.inputText);
         }}
-        guessedLetters={wordleStore.guessedLetters}
         {addCharacter}
         {deleteCharacter}
       />
+      {#if gameState.error}
+        <Message text={gameState.error} />
+      {/if}
     </div>
-    {#if error}
-      <Message text={error} />
-    {/if}
-  </div>
-{/await}
+  {/if}
+{/key}

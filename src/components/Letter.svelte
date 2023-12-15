@@ -24,7 +24,7 @@
         default:
           return "bg-gray-500";
       }
-    })(),
+    })()
   );
 
   let scale = tweened(1, {
@@ -45,15 +45,17 @@
   });
 
   $effect(() => {
-    if (!(index === undefined)) {
-      setTimeout(() => {
-        xRot.set(90).then(() => {
-          isSubmitted = true;
-          xRot.set(0);
-        });
-      }, index * 600);
-    }
+    if (!letter) return;
+    if (index === null || index === undefined) return;
+    setTimeout(() => {
+      xRot.set(90).then(() => {
+        isSubmitted = true;
+        xRot.set(0);
+      });
+    }, index * 600);
   });
+
+  $inspect(letter);
 </script>
 
 <div class="w-16 h-16" style:transform="scale({$scale}) rotateX({$xRot}deg)">

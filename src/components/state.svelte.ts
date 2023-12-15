@@ -1,16 +1,9 @@
-enum GameStateStatus {
+export enum GameStateStatus {
     PLAYING = "PLAYING",
     WON = "WON",
     LOST = "LOST",
     SUBMITTING = "SUBMITTING",
     LOADING = "LOADING"
-}
-type GameState = {
-    targetWord: string | null;
-    guessedLetters: Set<string>;
-    guessesLeft: number;
-    guesses: LetterGuess[][];
-    state: GameStateStatus;
 }
 enum LetterStatus {
     CORRECT = "CORRECT",
@@ -29,35 +22,76 @@ const getWords = async (): Promise<string[]> => {
     return data.default;
 };
 
-export let targetWord = $state<string | null>(null);
-export let guessedLetters = $state<Set<string>>(new Set<string>())
-export let guessesLeft = $state<number>(5)
-export let guesses = $state<LetterGuess[][]>([])
-export let gameStatus = $state<GameStateStatus>(GameStateStatus.LOADING)
+type GameState = {
+    targetWord: string | null;
+    guessesLeft: number;
+    guesses: LetterGuess[][];
+    guessedLetters: Set<LetterGuess>;
+    gameStatus: GameStateStatus;
+    inputText: string;
+    error: string | null;
+};
 
+const initialState: GameState = {
+    targetWord: null,
+    guessesLeft: 6,
+    guesses: [],
+    guessedLetters: new Set<LetterGuess>(),
+    gameStatus: GameStateStatus.LOADING,
+    inputText: "",
+    error: null,
+};
+
+export let gameState = $state<GameState>(initialState);
+let words = $state<string[]>()
+
+
+const setupState = (words: string[]) => {
+    gameState.targetWord = words[Math.floor(Math.random() * words.length)];
+    gameState.guessesLeft = 6;
+    gameState.guesses = [];
+    gameState.gameStatus = GameStateStatus.PLAYING; // Directly setting the value
+    gameState.guessedLetters = new Set();
+    gameState.inputText = "";
+    gameState.error = null
+}
 
 export const initializeGame = async () => {
     try {
-        gameStatus = GameStateStatus.LOADING; // Directly setting the value
-        const words = await getWords();
-        targetWord = words[Math.floor(Math.random() * words.length)];
-        guessedLetters = new Set<string>();
-        guessesLeft = 6;
-        guesses = [];
-        gameStatus = GameStateStatus.PLAYING; // Directly setting the value
+        gameState.gameStatus = GameStateStatus.LOADING; // Directly setting the value
+        words = await getWords();
+        setupState(words)
     } catch (error) {
         console.error('Error initializing game:', error);
-        gameStatus = GameStateStatus.LOST; // or a new state like ERROR
+        gameState.gameStatus = GameStateStatus.LOST; // or a new state like ERROR
     }
 };
 
-export const processGuess = (guess: string) => {
-    if (gameStatus !== GameStateStatus.PLAYING) {
+export const resetGame = () => {
+    gameState.gameStatus = GameStateStatus.LOADING
+    if (!words) {
+        initializeGame()
+        return;
+    }
+    setupState(words)
+}
+
+export const processGuess = async (guess: string) => {
+    if (gameState.gameStatus !== GameStateStatus.PLAYING) {
         return; // Do not process if not in playing state
     }
+    if (gameState.inputText.length < 5) {
+        gameState.error = "Must be 5 characters";
+        return
+    }
 
-    gameStatus = GameStateStatus.SUBMITTING; // Directly setting the value
-    const currentTargetWord = targetWord;
+    if (!words?.includes(gameState.inputText)) {
+        gameState.error = "Invalid word"
+        return
+    }
+
+    gameState.gameStatus = GameStateStatus.SUBMITTING; // Directly setting the value
+    const currentTargetWord = gameState.targetWord;
 
     if (currentTargetWord) {
         const guessResult = guess.split('').map((letter, index) => {
@@ -68,14 +102,26 @@ export const processGuess = (guess: string) => {
             }
             return { letter, status: LetterStatus.WRONG };
         });
+        gameState.guesses = guessResult.length > 0 ? [...gameState.guesses, guessResult] : gameState.guesses;
+        gameState.guessedLetters = new Set(gameState.guesses.flatMap(guess => guess))
+        gameState.guessesLeft = gameState.guessesLeft - 1;
 
-        guessedLetters = new Set(guessedLetters.add(guess));
-        guesses = guessResult.length > 0 ? [...guesses, guessResult] : guesses;
-        guessesLeft = guessesLeft - 1;
+        gameState.inputText = ""
 
         // Check for win/lose conditions
         const isWin = guessResult.every(l => l.status === LetterStatus.CORRECT);
-        gameStatus = isWin ? GameStateStatus.WON : guessesLeft <= 0 ? GameStateStatus.LOST : GameStateStatus.PLAYING;
+        gameState.gameStatus = isWin ? GameStateStatus.WON : gameState.guessesLeft <= 0 ? GameStateStatus.LOST : GameStateStatus.PLAYING;
     }
 };
 
+
+export const addCharacter = (character: string) => {
+    if (gameState.inputText.length >= 5) {
+        return;
+    }
+    gameState.inputText += character;
+};
+
+export const deleteCharacter = () => {
+    gameState.inputText = gameState.inputText.slice(0, -1);
+};

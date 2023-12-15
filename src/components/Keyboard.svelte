@@ -1,15 +1,15 @@
 <script lang="ts">
-  import type { LetterGuess } from "./wordleStore";
   import {createEventDispatcher} from "svelte";
+  import {gameState} from "./state.svelte"
 
   const dispatch = createEventDispatcher();
-  const { guessedLetters, addCharacter, deleteCharacter } = $props<{
-    guessedLetters: Set<LetterGuess>;
+  const { addCharacter, deleteCharacter } = $props<{
     addCharacter: (char: string) => void;
     deleteCharacter: () => void;
   }>();
+
   let charMap = $derived((() => {
-    const guesses = Array.from(guessedLetters);
+    const guesses = Array.from(gameState.guessedLetters);
     const charMap: { [key: string]: string } = {};
     for (const guess of guesses) {
       charMap[guess.letter] = guess.status;
