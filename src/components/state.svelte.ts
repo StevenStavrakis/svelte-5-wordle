@@ -3,6 +3,7 @@ export enum GameStateStatus {
     WON = "WON",
     LOST = "LOST",
     SUBMITTING = "SUBMITTING",
+    SUBMITTED = "SUBMITTED",
     LOADING = "LOADING"
 }
 enum LetterStatus {
@@ -30,6 +31,7 @@ type GameState = {
     gameStatus: GameStateStatus;
     inputText: string;
     error: string | null;
+    finishedAnimations: number;
 };
 
 const initialState: GameState = {
@@ -40,6 +42,7 @@ const initialState: GameState = {
     gameStatus: GameStateStatus.LOADING,
     inputText: "",
     error: null,
+    finishedAnimations: 0
 };
 
 export let gameState = $state<GameState>(initialState);
@@ -50,10 +53,10 @@ const setupState = (words: string[]) => {
     gameState.targetWord = words[Math.floor(Math.random() * words.length)];
     gameState.guessesLeft = 6;
     gameState.guesses = [];
-    gameState.gameStatus = GameStateStatus.PLAYING; // Directly setting the value
     gameState.guessedLetters = new Set();
     gameState.inputText = "";
     gameState.error = null
+    gameState.gameStatus = GameStateStatus.PLAYING; // Directly setting the value
 }
 
 export const initializeGame = async () => {
@@ -76,11 +79,12 @@ export const resetGame = () => {
     setupState(words)
 }
 
-export const processGuess = async (guess: string) => {
+export const processGuess = () => {
+    const guess = gameState.inputText;
     if (gameState.gameStatus !== GameStateStatus.PLAYING) {
         return; // Do not process if not in playing state
     }
-    if (gameState.inputText.length < 5) {
+    if (guess.length < 5) {
         gameState.error = "Must be 5 characters";
         return
     }
@@ -94,25 +98,42 @@ export const processGuess = async (guess: string) => {
     const currentTargetWord = gameState.targetWord;
 
     if (currentTargetWord) {
+        const charmap = new Map()
+        currentTargetWord.split("").forEach(char => {
+            if (charmap.has(char)) {
+                charmap.set(char, charmap.get(char) + 1)
+                return
+            }
+            charmap.set(char, 1)
+        })
         const guessResult = guess.split('').map((letter, index) => {
-            if (letter === currentTargetWord[index]) {
+            if (letter === currentTargetWord[index] && charmap.get(letter) >= 1) {
+                charmap.set(letter, charmap.get(letter) - 1)
                 return { letter, status: LetterStatus.CORRECT };
-            } else if (currentTargetWord.includes(letter)) {
+            } else if (currentTargetWord.includes(letter) && charmap.get(letter) >= 1) {
+                charmap.set(letter, charmap.get(letter) - 1)
                 return { letter, status: LetterStatus.INCLUDED };
             }
             return { letter, status: LetterStatus.WRONG };
         });
         gameState.guesses = guessResult.length > 0 ? [...gameState.guesses, guessResult] : gameState.guesses;
-        gameState.guessedLetters = new Set(gameState.guesses.flatMap(guess => guess))
         gameState.guessesLeft = gameState.guessesLeft - 1;
 
         gameState.inputText = ""
 
-        // Check for win/lose conditions
-        const isWin = guessResult.every(l => l.status === LetterStatus.CORRECT);
-        gameState.gameStatus = isWin ? GameStateStatus.WON : gameState.guessesLeft <= 0 ? GameStateStatus.LOST : GameStateStatus.PLAYING;
     }
 };
+
+export const checkWin = () => {
+    const lastGuess = gameState.guesses[gameState.guesses.length - 1];
+    gameState.guessedLetters = new Set(gameState.guesses.flatMap(guess => guess))
+    // Check for win/lose conditions
+    if (lastGuess) {
+        const isWin = lastGuess.every(l => l.status === LetterStatus.CORRECT);
+        gameState.gameStatus = isWin ? GameStateStatus.WON : gameState.guessesLeft <= 0 ? GameStateStatus.LOST : GameStateStatus.PLAYING;
+    }
+}
+
 
 
 export const addCharacter = (character: string) => {
@@ -124,4 +145,12 @@ export const addCharacter = (character: string) => {
 
 export const deleteCharacter = () => {
     gameState.inputText = gameState.inputText.slice(0, -1);
+};
+
+export const animationFinished = () => {
+    gameState.finishedAnimations++;
+    if (gameState.finishedAnimations >= 5) {
+        gameState.gameStatus = GameStateStatus.SUBMITTED;
+        gameState.finishedAnimations = 0
+    }
 };

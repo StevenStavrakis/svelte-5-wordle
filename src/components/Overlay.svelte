@@ -29,7 +29,7 @@
 
 {#if gameState.gameStatus !== GameStateStatus.PLAYING}
   <div
-    in:fade={{ delay: 3000, duration: 200 }}
+    in:fade={{ delay: 500, duration: 300 }}
     out:fade={{ delay: 0, duration: 200 }}
     class="absolute w-full h-full flex items-center justify-center {dynamicClasses} z-10"
   >

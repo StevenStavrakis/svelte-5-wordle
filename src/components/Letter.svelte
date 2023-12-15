@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { animationFinished } from "./state.svelte";
   import { tweened } from "svelte/motion";
   const { letter, status, current, index } = $props<{
     letter: string | null;
@@ -32,7 +33,7 @@
   });
 
   let xRot = tweened(0, {
-    duration: 300,
+    duration: 200,
   });
 
   $effect(() => {
@@ -50,12 +51,12 @@
     setTimeout(() => {
       xRot.set(90).then(() => {
         isSubmitted = true;
-        xRot.set(0);
+        xRot.set(0).then(() => {
+          animationFinished();
+        });
       });
-    }, index * 600);
+    }, index * 400);
   });
-
-  $inspect(letter);
 </script>
 
 <div class="w-16 h-16" style:transform="scale({$scale}) rotateX({$xRot}deg)">

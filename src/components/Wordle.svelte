@@ -1,6 +1,5 @@
 <script lang="ts">
   import Keyboard from "./Keyboard.svelte";
-  import { onMount } from "svelte";
   import Message from "./Message.svelte";
   import Overlay from "./Overlay.svelte";
   import {
@@ -10,15 +9,17 @@
     processGuess,
     GameStateStatus,
     initializeGame,
+    checkWin,
   } from "./state.svelte.ts";
   import Board from "./Board.svelte";
+  import { onMount } from "svelte";
+  import { fade } from "svelte/transition";
+
+  // on first load this will render twice because of the #key, but I don't think it's an issue
 
   const isLoading = $derived(
     (() => {
-      if (gameState.gameStatus === GameStateStatus.LOADING) {
-        return true;
-      }
-      return false;
+      return gameState.gameStatus === GameStateStatus.LOADING;
     })()
   );
   const handleKeyPress = (event: KeyboardEvent) => {
@@ -29,7 +30,7 @@
       deleteCharacter();
       return;
     } else if (event.key === "Enter") {
-      processGuess(gameState.inputText);
+      processGuess();
       return;
     } else if (event.key.length === 1 && event.key.match(/[a-z]/i)) {
       addCharacter(event.key);
@@ -37,36 +38,34 @@
     }
   };
 
-  onMount(() => {
-    initializeGame();
-    window.addEventListener("keydown", handleKeyPress);
-    return () => {
-      window.removeEventListener("keydown", handleKeyPress);
-    };
+  $effect(() => {
+    if (gameState.gameStatus === GameStateStatus.SUBMITTED) {
+      checkWin();
+    }
   });
 
-  $inspect(isLoading);
+  onMount(() => {
+    initializeGame();
+  });
+  
 </script>
 
+<svelte:window onkeydown={handleKeyPress} />
+{#if isLoading}
+  <div
+    out:fade
+    class="w-screen absolute z-10 h-screen grid place-items-center bg-[#13151a]"
+  >
+    <div class="text-white">loading...</div>
+  </div>
+{/if}
 {#key isLoading}
-  {#if isLoading}
-    <div class="w-screen h-screen grid place-items-center">
-      <div class="text-white">loading...</div>
-    </div>
-  {:else}
-    <div class="w-screen h-screen grid place-items-center">
-      <Overlay />
-      <Board />
-      <Keyboard
-        on:submitWord={() => {
-          processGuess(gameState.inputText);
-        }}
-        {addCharacter}
-        {deleteCharacter}
-      />
-      {#if gameState.error}
-        <Message text={gameState.error} />
-      {/if}
-    </div>
-  {/if}
+  <div class="w-screen h-screen grid place-items-center">
+    <Overlay />
+    <Board />
+    <Keyboard />
+    {#if gameState.error}
+      <Message text={gameState.error} />
+    {/if}
+  </div>
 {/key}

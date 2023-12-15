@@ -2,6 +2,7 @@
   import Letter from "./Letter.svelte";
   import InputRow from "./InputRow.svelte";
   import { gameState } from "./state.svelte";
+  import SubmittedRow from "./SubmittedRow.svelte";
 </script>
 
 <div class="text-white mb-12">
@@ -11,16 +12,7 @@
   </div>
   <div class="flex flex-col gap-4">
     {#each gameState.guesses as guess}
-      <div class="flex gap-2 justify-center">
-        {#each guess as letter, i}
-          <Letter
-            index={i}
-            current={false}
-            letter={letter.letter}
-            status={letter.status}
-          />
-        {/each}
-      </div>
+      <SubmittedRow {guess} />
     {/each}
     {#if gameState.guessesLeft > 0}
       <InputRow />

@@ -1,12 +1,6 @@
 <script lang="ts">
-  import {createEventDispatcher} from "svelte";
-  import {gameState} from "./state.svelte"
+  import {gameState, processGuess, addCharacter, deleteCharacter} from "./state.svelte"
 
-  const dispatch = createEventDispatcher();
-  const { addCharacter, deleteCharacter } = $props<{
-    addCharacter: (char: string) => void;
-    deleteCharacter: () => void;
-  }>();
 
   let charMap = $derived((() => {
     const guesses = Array.from(gameState.guessedLetters);
@@ -17,7 +11,6 @@
     return charMap;
   })())
 
-  $inspect({charMap});
 </script>
 
 <div class="keyboard flex flex-col gap-2">
@@ -26,10 +19,10 @@
       {#if i === 2} 
         <button
           class="bg-gray-500 text-white p-4 rounded-md min-w-[50px] uppercase"
-            on:click={(event) => {
+            onclick={(event) => {
                 (event.target as HTMLElement).blur();
-              dispatch("submitWord");
-                }}
+                processGuess()
+            }}
         >
         enter
         </button>
@@ -42,7 +35,7 @@
           class:opacity-40={disabled}
           class:bg-green-500={status === "CORRECT"}
           class:bg-yellow-500={status === "INCLUDED"}
-            on:click={(event) => {
+            onclick={(event) => {
                 (event.target as HTMLElement).blur();
                 addCharacter(letter);
                 }}
@@ -53,7 +46,7 @@
       {#if i === 2} 
         <button
           class="bg-gray-500 text-white p-4 rounded-md min-w-[50px] uppercase"
-          on:click={(event) => {
+          onclick={(event) => {
                 (event.target as HTMLElement).blur();
             deleteCharacter()
           }}
