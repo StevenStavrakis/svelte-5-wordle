@@ -32,7 +32,7 @@
   });
 
   let xRot = tweened(0, {
-    duration: 500,
+    duration: 300,
   });
 
   $effect(() => {
@@ -51,7 +51,7 @@
           isSubmitted = true;
           xRot.set(0);
         });
-      }, index * 1000);
+      }, index * 600);
     }
   });
 </script>

@@ -1,0 +1,1 @@
+export let animating = $state<boolean>(false)

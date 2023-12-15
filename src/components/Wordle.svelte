@@ -4,6 +4,8 @@
   import { tweened } from "svelte/motion";
   import { onMount } from "svelte";
   import Message from "./Message.svelte";
+  import InputRow from "./InputRow.svelte";
+  import Overlay from "./Overlay.svelte";
 
   type WordleStore = {
     targetWord: string;
@@ -18,6 +20,18 @@
     status: "CORRECT" | "INCLUDED" | "WRONG";
   };
 
+  let words = $state<string[]>([]);
+  let inputText = $state("");
+  let error = $state("");
+  let wordleStore = $state<WordleStore>({
+    targetWord: "",
+    guessedLetters: new Set(),
+    guessesLeft: 5,
+    guesses: [],
+    status: "playing",
+  });
+
+  let animating = $state<boolean>(false);
   let opacity = tweened(0, {
     delay: 300,
   });
@@ -39,21 +53,9 @@
     opacity.set(1);
   };
 
-  let words = $state<string[]>([]);
-
   const getRandomWord = (words: string[]): string => {
     return words[Math.floor(Math.random() * words.length)];
   };
-
-  let wordleStore = $state<WordleStore>({
-    targetWord: "",
-    guessedLetters: new Set(),
-    guessesLeft: 5,
-    guesses: [],
-    status: "playing",
-  });
-
-  let inputText = $state("");
 
   const addCharacter = (character: string) => {
     if (inputText.length >= 5) {
@@ -65,8 +67,6 @@
   const deleteCharacter = () => {
     inputText = inputText.slice(0, -1);
   };
-
-  let error = $state("");
 
   $effect(() => {
     inputText;
@@ -94,7 +94,7 @@
     };
   };
 
-  const submitWord = (word: string) => {
+  const submitWord = async (word: string) => {
     if (wordleStore.status !== "playing") {
       return;
     }
@@ -152,6 +152,10 @@
       ...wordleStore.guessedLetters,
       ...toDisplay,
     ]);
+
+    animating = true;
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    animating = false;
     if (word === wordleStore.targetWord) {
       wordleStore.status = "won";
       return;
@@ -166,7 +170,7 @@
   };
 
   const handleKeyPress = (event: KeyboardEvent) => {
-    if (wordleStore.status !== "playing") {
+    if (wordleStore.status !== "playing" || animating) {
       return;
     }
     if (event.key === "Backspace") {
@@ -198,32 +202,11 @@
     class="w-screen h-screen grid place-items-center"
     style={`opacity: ${$opacity}`}
   >
-    {#if wordleStore.status === "won"}
-      <div
-        class="absolute w-full h-full flex items-center justify-center bg-green-600/80"
-      >
-        <div>
-          <h2 class="text-4xl text-white font-bold">You win!</h2>
-          <span>the word was:</span>
-          <span class="text-2xl">{wordleStore.targetWord}</span>
-        </div>
-      </div>
-    {/if}
-    {#if wordleStore.status === "lost"}
-      <div
-        class="absolute w-full h-full flex items-center justify-center bg-red-600/80 text-white"
-      >
-        <div class="text-center">
-          <h2 class="text-5xl font-bold mb-2">You lose!</h2>
-          <p class="">The word was:</p>
-          <p class="text-3xl mb-2">{wordleStore.targetWord}</p>
-          <button
-            class="px-4 py-2 bg-white text-red-800 rounded-full"
-            on:click={reset}>Play Again</button
-          >
-        </div>
-      </div>
-    {/if}
+    <Overlay
+      targetWord={wordleStore.targetWord}
+      gameStatus={wordleStore.status}
+      {reset}
+    />
     <div>
       <div class="text-white mb-12">
         <div class="text-center mb-12">
@@ -244,15 +227,7 @@
             </div>
           {/each}
           {#if wordleStore.guessesLeft > 0}
-            <div id="current_row" class="flex gap-2 justify-center">
-              {#each [0, 1, 2, 3, 4].map((ind) => inputText[ind]) as letter}
-                <Letter
-                  current={true}
-                  letter={letter ?? null}
-                  status={null}
-                />
-              {/each}
-            </div>
+            <InputRow {inputText} />
             {#each [...Array(wordleStore.guessesLeft - 1)] as empty}
               <div class="flex gap-2 justify-center">
                 {#each [...Array(5)] as emptyLetter}
