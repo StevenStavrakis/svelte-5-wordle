@@ -1,7 +1,6 @@
 <script lang="ts">
   import Letter from "./Letter.svelte";
-  import type { LetterGuess } from "./wordleStore";
-
+  import type { LetterGuess } from "./state.svelte";
   const { guess } = $props<{
     guess: LetterGuess[];
   }>();

@@ -11,7 +11,7 @@ enum LetterStatus {
     INCLUDED = "INCLUDED",
     WRONG = "WRONG"
 }
-type LetterGuess = {
+export type LetterGuess = {
     letter: string;
     status: LetterStatus;
 }

@@ -33,7 +33,7 @@
   });
 
   let xRot = tweened(0, {
-    duration: 200,
+    duration: 100,
   });
 
   $effect(() => {
@@ -55,7 +55,7 @@
           animationFinished();
         });
       });
-    }, index * 400);
+    }, index * 200);
   });
 </script>
 

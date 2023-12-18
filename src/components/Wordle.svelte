@@ -47,7 +47,6 @@
   onMount(() => {
     initializeGame();
   });
-  
 </script>
 
 <svelte:window onkeydown={handleKeyPress} />
@@ -59,13 +58,13 @@
     <div class="text-white">loading...</div>
   </div>
 {/if}
-{#key isLoading}
-  <div class="w-screen h-screen grid place-items-center">
+<div class="w-screen h-screen grid place-items-center">
+  <Board />
+  <Keyboard />
+  {#if gameState.gameStatus === GameStateStatus.WON || gameState.gameStatus === GameStateStatus.LOST}
     <Overlay />
-    <Board />
-    <Keyboard />
-    {#if gameState.error}
-      <Message text={gameState.error} />
-    {/if}
-  </div>
-{/key}
+  {/if}
+  {#if gameState.error}
+    <Message text={gameState.error} />
+  {/if}
+</div>

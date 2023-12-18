@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { spring, tweened } from "svelte/motion";
+  import { tweened } from "svelte/motion";
   import { gameState } from "./state.svelte";
   import { untrack } from "svelte";
   const { text } = $props<{ text: string }>();
