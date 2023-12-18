@@ -29,10 +29,9 @@
       {/if}
       {#each letterRow.split("") as letter}
       {@const status = charMap[letter]}
-      {@const disabled = status === "WRONG"}
         <button
           class="bg-gray-500 text-white p-4 rounded-md min-w-[50px] uppercase"
-          class:opacity-40={disabled}
+          class:opacity-40={status === "WRONG"}
           class:bg-green-500={status === "CORRECT"}
           class:bg-yellow-500={status === "INCLUDED"}
             onclick={(event) => {

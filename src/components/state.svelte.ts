@@ -6,22 +6,17 @@ export enum GameStateStatus {
     SUBMITTED = "SUBMITTED",
     LOADING = "LOADING"
 }
+
 enum LetterStatus {
     CORRECT = "CORRECT",
     INCLUDED = "INCLUDED",
     WRONG = "WRONG"
 }
+
 export type LetterGuess = {
     letter: string;
     status: LetterStatus;
 }
-
-const getWords = async (): Promise<string[]> => {
-    const response = await fetch("/words.json");
-
-    const data = await response.json();
-    return data.default;
-};
 
 type GameState = {
     targetWord: string | null;
@@ -49,6 +44,13 @@ export let gameState = $state<GameState>(initialState);
 let words = $state<string[]>()
 
 
+const getWords = async (): Promise<string[]> => {
+    const response = await fetch("/words.json");
+
+    const data = await response.json();
+    return data.default;
+};
+
 const setupState = (words: string[]) => {
     gameState.targetWord = words[Math.floor(Math.random() * words.length)];
     gameState.guessesLeft = 6;
@@ -56,17 +58,17 @@ const setupState = (words: string[]) => {
     gameState.guessedLetters = new Set();
     gameState.inputText = "";
     gameState.error = null
-    gameState.gameStatus = GameStateStatus.PLAYING; // Directly setting the value
+    gameState.gameStatus = GameStateStatus.PLAYING;
 }
 
 export const initializeGame = async () => {
     try {
-        gameState.gameStatus = GameStateStatus.LOADING; // Directly setting the value
+        gameState.gameStatus = GameStateStatus.LOADING;
         words = await getWords();
         setupState(words)
     } catch (error) {
         console.error('Error initializing game:', error);
-        gameState.gameStatus = GameStateStatus.LOST; // or a new state like ERROR
+        gameState.gameStatus = GameStateStatus.LOST;
     }
 };
 
@@ -94,7 +96,7 @@ export const processGuess = () => {
         return
     }
 
-    gameState.gameStatus = GameStateStatus.SUBMITTING; // Directly setting the value
+    gameState.gameStatus = GameStateStatus.SUBMITTING;
     const currentTargetWord = gameState.targetWord;
 
     if (currentTargetWord) {
