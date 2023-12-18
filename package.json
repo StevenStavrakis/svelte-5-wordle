@@ -10,13 +10,13 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/check": "^0.3.1",
-    "@astrojs/svelte": "^5.0.0",
+    "@astrojs/check": "^0.3.3",
+    "@astrojs/svelte": "^5.0.1",
     "@astrojs/tailwind": "^5.0.3",
-    "astro": "^4.0.2",
-    "svelte": "^5.0.0-next.1",
-    "tailwindcss": "^3.0.24",
-    "typescript": "^5.3.2"
+    "astro": "^4.0.6",
+    "svelte": "5.0.0-next.25",
+    "tailwindcss": "^3.3.6",
+    "typescript": "^5.3.3"
   },
   "devDependencies": {
     "cheerio": "1.0.0-rc.12"

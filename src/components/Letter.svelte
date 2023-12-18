@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { animationFinished } from "./state/state.svelte";
   import { tweened } from "svelte/motion";
   const { letter, status, current, index } = $props<{
     letter: string | null;
@@ -24,7 +25,7 @@
         default:
           return "bg-gray-500";
       }
-    })(),
+    })()
   );
 
   let scale = tweened(1, {
@@ -32,7 +33,7 @@
   });
 
   let xRot = tweened(0, {
-    duration: 300,
+    duration: 100,
   });
 
   $effect(() => {
@@ -45,14 +46,16 @@
   });
 
   $effect(() => {
-    if (!(index === undefined)) {
-      setTimeout(() => {
-        xRot.set(90).then(() => {
-          isSubmitted = true;
-          xRot.set(0);
+    if (!letter) return;
+    if (index === null || index === undefined) return;
+    setTimeout(() => {
+      xRot.set(90).then(() => {
+        isSubmitted = true;
+        xRot.set(0).then(() => {
+          animationFinished();
         });
-      }, index * 600);
-    }
+      });
+    }, index * 200);
   });
 </script>
 

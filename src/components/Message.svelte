@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { spring, tweened } from "svelte/motion";
+  import { tweened } from "svelte/motion";
+  import { gameState } from "./state/state.svelte";
+  import { untrack } from "svelte";
   const { text } = $props<{ text: string }>();
 
   let display = $state(false);
@@ -20,6 +22,9 @@
             xPos.set(0).then(() => {
               opacity.set(0).then(() => {
                 display = false;
+                untrack(() => {
+                  gameState.error = "";
+                });
               });
             });
           });
@@ -31,7 +36,10 @@
 
 {#if display}
   <div class="absolute left-1/2 -translate-x-1/2">
-    <div class="p-6 bg-white text-black" style={`transform: translateX(${$xPos}px); opacity: ${$opacity}`}>
+    <div
+      class="p-6 bg-white text-black"
+      style={`transform: translateX(${$xPos}px); opacity: ${$opacity}`}
+    >
       <span>{text}</span>
     </div>
   </div>
