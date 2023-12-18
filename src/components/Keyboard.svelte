@@ -1,5 +1,5 @@
 <script lang="ts">
-  import {gameState, processGuess, addCharacter, deleteCharacter} from "./state.svelte"
+  import {gameState, processGuess, addCharacter, deleteCharacter} from "./state/state.svelte"
 
 
   let charMap = $derived((() => {

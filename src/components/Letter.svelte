@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { animationFinished } from "./state.svelte";
+  import { animationFinished } from "./state/state.svelte";
   import { tweened } from "svelte/motion";
   const { letter, status, current, index } = $props<{
     letter: string | null;

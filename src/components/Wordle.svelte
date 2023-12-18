@@ -10,7 +10,7 @@
     GameStateStatus,
     initializeGame,
     checkWin,
-  } from "./state.svelte.ts";
+  } from "./state/state.svelte.ts";
   import Board from "./Board.svelte";
   import { onMount } from "svelte";
   import { fade } from "svelte/transition";

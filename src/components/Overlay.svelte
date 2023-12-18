@@ -4,7 +4,7 @@
     GameStateStatus,
     gameState,
     initializeGame,
-  } from "./state.svelte.ts";
+  } from "./state/state.svelte.ts";
 
   const outcome = $derived((() => {
       if (gameState.gameStatus === GameStateStatus.WON) {

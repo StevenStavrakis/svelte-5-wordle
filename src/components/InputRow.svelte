@@ -1,6 +1,6 @@
 <script lang="ts">
   import Letter from "./Letter.svelte";
-  import { gameState } from "./state.svelte";
+  import { gameState } from "./state/state.svelte";
 </script>
 
 <div id="current_row" class="flex gap-2 justify-center">

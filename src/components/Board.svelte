@@ -1,7 +1,7 @@
 <script lang="ts">
   import Letter from "./Letter.svelte";
   import InputRow from "./InputRow.svelte";
-  import { gameState } from "./state.svelte";
+  import { gameState } from "./state/state.svelte";
   import SubmittedRow from "./SubmittedRow.svelte";
 </script>
 
