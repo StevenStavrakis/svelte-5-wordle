@@ -4,9 +4,7 @@
   import Overlay from "./Overlay.svelte";
   import {
     gameState,
-    addCharacter,
-    deleteCharacter,
-    processGuess,
+    handleKeyPress,
     GameStateStatus,
     initializeGame,
     checkWin,
@@ -22,21 +20,6 @@
       return gameState.gameStatus === GameStateStatus.LOADING;
     })()
   );
-  const handleKeyPress = (event: KeyboardEvent) => {
-    if (gameState.gameStatus !== GameStateStatus.PLAYING) {
-      return;
-    }
-    if (event.key === "Backspace") {
-      deleteCharacter();
-      return;
-    } else if (event.key === "Enter") {
-      processGuess();
-      return;
-    } else if (event.key.length === 1 && event.key.match(/[a-z]/i)) {
-      addCharacter(event.key);
-      return;
-    }
-  };
 
   $effect(() => {
     if (gameState.gameStatus === GameStateStatus.SUBMITTED) {
